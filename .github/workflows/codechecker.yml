@@ -2,7 +2,11 @@ name: 'C++ Static Analysis'
 
 on:
   push:
+    paths-ignore:
+      - '**.md'
   pull_request:
+    paths-ignore:
+      - '**.md'
 
 concurrency:
   group: codechecker-${{ github.ref }}
@@ -27,6 +31,9 @@ jobs:
         continue-on-error: true
         with:
           llvm-version: 'latest'
+          install-custom: true
+          version: 'master'
+          repository: 'Ericsson/CodeChecker'
 
           config: .github/codechecker.json
 
