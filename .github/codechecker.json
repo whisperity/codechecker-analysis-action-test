@@ -1,0 +1,6 @@
+{
+    "analyze": [
+        "--enable=sensitive",
+        "--enable=extreme"
+    ]
+}

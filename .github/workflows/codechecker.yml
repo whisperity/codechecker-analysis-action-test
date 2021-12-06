@@ -1,0 +1,75 @@
+name: 'C++ Static Analysis'
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: codechecker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ubuntu_2004:
+    name: "Analysis on Ubuntu 20.04"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v2
+
+      - name: "Prepare the build"
+        run: |
+          mkdir Build
+          cd Build
+          cmake ../src -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - uses: whisperity/codechecker-analysis-action@master
+        id: codechecker
+        continue-on-error: true
+        with:
+          llvm-version: 'latest'
+
+          config: .github/codechecker.json
+
+          logfile: 'Build/compile_commands.json'
+
+          ctu: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
+
+          diff: true
+          diff-url: ${{ secrets.CODECHECKER_URL }}
+          diff-username: ${{ secrets.CODECHECKER_READ_USERNAME }}
+          diff-password: ${{ secrets.CODECHECKER_READ_PASSWORD }}
+
+          store: true
+          store-url: ${{ secrets.CODECHECKER_URL }}
+          store-username: ${{ secrets.CODECHECKER_USERNAME }}
+          store-password: ${{ secrets.CODECHECKER_PASSWORD }}
+
+      - name: "Upload static analysis results (push)"
+        if: ${{ github.event_name == 'push' && steps.codechecker.outputs.warnings }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: "Full findings"
+          path: ${{ steps.codechecker.outputs.result-html-dir }}
+          if-no-files-found: error
+
+      - name: "Upload static analysis results (PR)"
+        if: ${{ github.event_name == 'pull_request' && steps.codechecker.outputs.warnings-in-diff }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: "New findings"
+          path: ${{ steps.codechecker.outputs.diff-html-dir }}
+          if-no-files-found: error
+
+      - name: "Reject PR introducing new changes"
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_NEW_BUGS: ${{ steps.codechecker.outputs.warnings-in-diff }}
+        run: |
+          set -x
+          if [[ "$PR_NEW_BUGS" == "true" ]]; then
+            echo "::warning title=Static analysis found new bugs::This pull request attempts to introduce new analysis reports into the project!"
+            exit 1
+          else
+            echo "::notice title=Static analysis::Static analysis found no new reports to be introduced into the project."
+            exit 0
+          fi
