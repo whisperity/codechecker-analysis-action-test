@@ -46,7 +46,7 @@ jobs:
           diff-username: ${{ secrets.CODECHECKER_READ_USERNAME }}
           diff-password: ${{ secrets.CODECHECKER_READ_PASSWORD }}
 
-          store: true
+          store: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           store-url: ${{ secrets.CODECHECKER_URL }}
           store-username: ${{ secrets.CODECHECKER_USERNAME }}
           store-password: ${{ secrets.CODECHECKER_PASSWORD }}
