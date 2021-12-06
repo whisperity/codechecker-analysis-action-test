@@ -41,7 +41,7 @@ jobs:
 
           ctu: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
 
-          diff: true
+          diff: ${{ github.event_name == 'pull_request' }}
           diff-url: ${{ secrets.CODECHECKER_URL }}
           diff-username: ${{ secrets.CODECHECKER_READ_USERNAME }}
           diff-password: ${{ secrets.CODECHECKER_READ_PASSWORD }}
