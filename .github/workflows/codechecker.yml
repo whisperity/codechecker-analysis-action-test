@@ -26,7 +26,7 @@ jobs:
           cd Build
           cmake ../src -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-      - uses: whisperity/codechecker-analysis-action@fix/use-colon-in-run-name
+      - uses: whisperity/codechecker-analysis-action@master
         id: codechecker
         continue-on-error: true
         with:
